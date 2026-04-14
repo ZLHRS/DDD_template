@@ -1,23 +1,17 @@
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 import re
 
 from app.domain.common.vo.integer import PositiveInteger
 from app.domain.common.vo.string import NonEmptyString
 
+
 class UserRole(str, Enum):
     ANALYST = "analyst"
-    SECURITY = "security"
     ADMIN = "admin"
-
-    def can_run_scoring(self) -> bool:
-        return self in (UserRole.ADMIN,)
 
     def can_manage_users(self) -> bool:
         return self == UserRole.ADMIN
-
-    def can_view_investigations(self) -> bool:
-        return self in (UserRole.SECURITY, UserRole.ADMIN)
 
 
 class UserId(PositiveInteger):
@@ -55,7 +49,7 @@ class Email(NonEmptyString):
 
         if cls._EMAIL_PATTERN.fullmatch(value) is None:
             raise ValueError("Email value must match the allowed email format")
-        
+
 
 class PasswordHash(NonEmptyString):
     min_length = 1
@@ -63,12 +57,6 @@ class PasswordHash(NonEmptyString):
 
     def __init__(self, value: str) -> None:
         self._validate_type(value)
-        if value == "":
-            self._validate(value)
-            return
-        if not value.strip():
-            raise ValueError("PasswordHash value must not be blank")
-
         normalized_value = value.strip()
         self._validate(normalized_value)
         self._value = normalized_value
@@ -76,3 +64,5 @@ class PasswordHash(NonEmptyString):
     @classmethod
     def _validate(cls, value: str) -> None:
         super()._validate(value)
+        if not value:
+            raise ValueError("PasswordHash value must not be empty")

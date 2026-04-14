@@ -5,10 +5,8 @@ from typing import Annotated
 
 from dature import Source, load
 from dature.fields.secret_str import SecretStr
-from dature.validators.number import Ge, Gt, Le, Lt
+from dature.validators.number import Gt, Lt
 from dature.validators.string import MinLength
-
-from app.infrastructure.validators import HttpUrl
 
 
 @dataclass
@@ -27,7 +25,10 @@ class PostgresConfig:
     echo_pool: bool = False
 
     def get_url(self) -> str:
-        return f"postgresql+asyncpg://{self.user}:{self.password.get_secret_value()}@{self.host}:{self.port}/{self.db}"
+        return (
+            "postgresql+asyncpg://"
+            f"{self.user}:{self.password.get_secret_value()}@{self.host}:{self.port}/{self.db}"
+        )
 
 
 @dataclass
@@ -36,25 +37,14 @@ class AuthConfig:
     algorithm: Annotated[str, MinLength(value=1)]
     access_token_expire_minutes: Annotated[int, Gt(value=0)]
     refresh_token_expire_days: Annotated[int, Gt(value=0)]
-    admin_emails: list[str]
-
-
-@dataclass
-class TelemetryConfig:
-    alloy_base: Annotated[SecretStr, HttpUrl()]
-    export_metrics: bool = True
-    export_traces: bool = True
-    sentry_dsn: Annotated[SecretStr, HttpUrl()] | None = None
-    sentry_traces_sample_rate: Annotated[float, Ge(value=0.0), Le(value=1.0)] = 1.0
-    sentry_ca_certs: str | None = None
 
 
 @dataclass
 class Config:
     postgres: PostgresConfig
     auth: AuthConfig
-    telemetry: TelemetryConfig
     environment: str = "development"
+
 
 
 def load_config(file_name: str | None = None) -> Config:

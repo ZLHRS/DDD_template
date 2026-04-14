@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.infrastructure.config import PostgresConfig
+from app.config import PostgresConfig
 
 
 def create_pool(db_config: PostgresConfig) -> async_sessionmaker[AsyncSession]:

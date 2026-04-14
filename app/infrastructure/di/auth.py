@@ -2,7 +2,7 @@ from dishka import Provider, Scope, provide
 
 from app.application.interfaces.auth import AuthService
 from app.infrastructure.auth import AuthServiceImpl
-from app.infrastructure.config import Config
+from app.config import Config
 
 
 class AuthProvider(Provider):

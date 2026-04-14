@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.db.repos import RefreshSessionRepositoryImpl, UserRepositoryImpl, AuditLogRepositoryImpl
+from app.infrastructure.db.repos import RefreshSessionRepositoryImpl, UserRepositoryImpl
 
 
 class HolderDao:
@@ -8,5 +8,3 @@ class HolderDao:
         self.session = session
         self.user_repo = UserRepositoryImpl(session)
         self.refresh_session_repo = RefreshSessionRepositoryImpl(session)
-        self.audit_log_repo = AuditLogRepositoryImpl(session)
-

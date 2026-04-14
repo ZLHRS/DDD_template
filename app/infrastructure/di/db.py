@@ -4,10 +4,9 @@ from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from app.application.common.transaction import TransactionManager
-from app.domain.audit.repository import IAuditLogRepository
 from app.domain.auth import RefreshSessionRepository
 from app.domain.user.repository import IUserRepository
-from app.infrastructure.config import Config
+from app.config import Config
 from app.infrastructure.db.factory import create_session_maker
 from app.infrastructure.db.holder import HolderDao
 from app.infrastructure.db.transaction import TransactionManagerImpl
@@ -18,12 +17,6 @@ class DBProvider(Provider):
 
     @provide(scope=Scope.APP)
     def get_engine(self, config: Config) -> AsyncEngine:
-        """
-        Provide AsyncEngine - created lazily without connection validation.
-
-        Using create_async_engine with echo_pool_connect=False to avoid
-        premature connection attempts during provider initialization.
-        """
         return create_async_engine(
             config.postgres.get_url(),
             echo=config.postgres.echo,
@@ -33,8 +26,7 @@ class DBProvider(Provider):
             max_overflow=config.postgres.max_overflow,
             pool_pre_ping=config.postgres.pool_pre_ping,
             echo_pool=config.postgres.echo_pool,
-            # Prevent connection validation during engine creation
-            connect_args={"server_settings": {"application_name": "antifrode"}},
+            connect_args={"server_settings": {"application_name": "backend-template"}},
         )
 
     @provide(scope=Scope.APP)
@@ -79,10 +71,3 @@ class DBProvider(Provider):
         holder_dao: HolderDao,
     ) -> RefreshSessionRepository:
         return holder_dao.refresh_session_repo
-
-    @provide(scope=Scope.REQUEST)
-    async def get_audit_log_repository(
-        self,
-        holder_dao: HolderDao,
-    ) -> IAuditLogRepository:
-        return holder_dao.audit_log_repo

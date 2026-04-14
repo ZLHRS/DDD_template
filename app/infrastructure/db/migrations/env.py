@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from app.infrastructure.config import load_config
+from app.config import load_config
 from app.infrastructure.db import models  # noqa: F401
 from app.infrastructure.db.models import base
 

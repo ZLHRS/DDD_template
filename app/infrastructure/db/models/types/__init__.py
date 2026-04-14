@@ -1,21 +1,7 @@
-from .user import UserIdType, EmailType, PasswordHashType
-from .entities import (
-    UploadIdType,
-    TransactionIdType,
-    PassengerIdType,
-    RiskConcentrationIdType,
-    PassengerFeaturesType,
-    PassengerScoreType,
-)
+from .user import EmailType, PasswordHashType, UserIdType
 
 __all__ = [
     "UserIdType",
     "EmailType",
     "PasswordHashType",
-    "UploadIdType",
-    "TransactionIdType",
-    "PassengerIdType",
-    "RiskConcentrationIdType",
-    "PassengerFeaturesType",
-    "PassengerScoreType",
 ]

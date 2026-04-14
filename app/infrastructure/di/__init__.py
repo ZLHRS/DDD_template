@@ -1,18 +1,19 @@
 from .auth import AuthProvider
-from .audit import AuditProvider
 from .db import DBProvider
-from .interactors import AuthInteractorProvider, interactor_providers
+from .interactors import AuthInteractorProvider, UserInteractorProvider, interactor_providers
 
 infra_providers = [
     AuthProvider,
-    AuditProvider,
+    DBProvider,
     AuthInteractorProvider,
+    UserInteractorProvider,
 ]
 
 __all__ = [
     "AuthProvider",
-    "AuditProvider",
     "DBProvider",
+    "AuthInteractorProvider",
+    "UserInteractorProvider",
     "infra_providers",
     "interactor_providers",
 ]

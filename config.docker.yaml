@@ -3,7 +3,7 @@ postgres:
   port: 5432
   user: postgres
   password: postgres
-  db: antifrode_backend_db
+  db: backend_template_db
   echo: false
   pool_size: 30
   pool_timeout: 30
@@ -17,13 +17,5 @@ auth:
   algorithm: "HS256"
   access_token_expire_minutes: 30
   refresh_token_expire_days: 7
-  admin_emails:
-    - admin@example.com
 
-telemetry:
-  alloy_base: "http://localhost:4317"
-  export_metrics: true
-  export_traces: true
-  sentry_dsn: null
-  sentry_traces_sample_rate: 1.0
-  sentry_ca_certs: null
+environment: development

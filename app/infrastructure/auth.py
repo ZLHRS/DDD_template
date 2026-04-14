@@ -8,7 +8,7 @@ import secrets
 from jose import jwt
 
 from app.application.interfaces.auth import AuthService
-from app.infrastructure.config import Config
+from app.config import Config
 
 _SCRYPT_N = 2**14
 _SCRYPT_R = 8
