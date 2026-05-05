@@ -5,7 +5,6 @@ from app.infrastructure.auth import AuthServiceImpl
 
 
 class AuthProvider(Provider):
-    """Provider for authentication service"""
     scope = Scope.APP
 
     @provide(scope=Scope.APP)
