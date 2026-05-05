@@ -1,26 +1,15 @@
-from dataclasses import dataclass
 from enum import Enum
 import re
-
-from app.domain.common.vo.integer import PositiveInteger
-from app.domain.common.vo.string import NonEmptyString
 
 
 class UserRole(str, Enum):
     ANALYST = "analyst"
     ADMIN = "admin"
 
-    def can_manage_users(self) -> bool:
-        return self == UserRole.ADMIN
 
+class Email:
+    __slots__ = ("_value",)
 
-class UserId(PositiveInteger):
-    pass
-
-
-class Email(NonEmptyString):
-    min_length = 3
-    max_length = 320
     _EMAIL_PATTERN = re.compile(
         r"^[a-zA-Z]+(?:[._][a-zA-Z0-9]+)*@"
         r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*(?:\."
@@ -28,41 +17,38 @@ class Email(NonEmptyString):
     )
 
     def __init__(self, value: str) -> None:
-        self._validate_type(value)
-        normalized_value = value.strip().lower()
-        self._validate(normalized_value)
-        self._value = normalized_value
+        if not isinstance(value, str):
+            raise TypeError(f"{self.__class__.__name__} value must be a str, got {type(value).__name__!r}")
 
-    @classmethod
-    def _validate(cls, value: str) -> None:
-        super()._validate(value)
-
-        if any(char.isspace() for char in value):
+        normalized = value.strip().lower()
+        length = len(normalized)
+        if not 3 <= length <= 320:
+            raise ValueError(f"{self.__class__.__name__} value must be between 3 and 320 characters long, got {length}")
+        if any(char.isspace() for char in normalized):
             raise ValueError("Email value must not contain whitespace")
-
-        if value.count("@") != 1:
+        if normalized.count("@") != 1:
             raise ValueError("Email value must contain a single @ separator")
 
-        local_part, domain_part = value.split("@", 1)
+        local_part, domain_part = normalized.split("@", 1)
         if not local_part or not domain_part:
             raise ValueError("Email value must have non-empty local and domain parts")
-
-        if cls._EMAIL_PATTERN.fullmatch(value) is None:
+        if self._EMAIL_PATTERN.fullmatch(normalized) is None:
             raise ValueError("Email value must match the allowed email format")
 
+        self._value = normalized
 
-class PasswordHash(NonEmptyString):
-    min_length = 1
-    max_length = 1024
+    @property
+    def value(self) -> str:
+        return self._value
 
-    def __init__(self, value: str) -> None:
-        self._validate_type(value)
-        normalized_value = value.strip()
-        self._validate(normalized_value)
-        self._value = normalized_value
+    def __eq__(self, other: object) -> bool:
+        return type(self) is type(other) and self.value == other.value  # type: ignore[attr-defined]
 
-    @classmethod
-    def _validate(cls, value: str) -> None:
-        super()._validate(value)
-        if not value:
-            raise ValueError("PasswordHash value must not be empty")
+    def __hash__(self) -> int:
+        return hash(self._value)
+
+    def __str__(self) -> str:
+        return self._value
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._value!r})"

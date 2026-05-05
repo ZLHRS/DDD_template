@@ -2,14 +2,14 @@ from sqlalchemy import select
 
 from app.domain.user.entity import User
 from app.domain.user.repository import IUserRepository
-from app.domain.user.vo import Email, UserId
+from app.domain.user.vo import Email
 from app.infrastructure.db.mappers import UserMapper
 from app.infrastructure.db.models.user import UserModel
 from app.infrastructure.db.repos.base import BaseSQLAlchemyRepo
 
 
 class UserRepositoryImpl(IUserRepository, BaseSQLAlchemyRepo):
-    async def get_by_id(self, user_id: UserId) -> User | None:
+    async def get_by_id(self, user_id: int) -> User | None:
         stmt = select(UserModel).where(UserModel.id == user_id)
         result = await self._session.execute(stmt)
         user_model = result.scalars().first()

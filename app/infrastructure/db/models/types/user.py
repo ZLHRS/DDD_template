@@ -1,33 +1,21 @@
-from sqlalchemy import BIGINT, String
+from sqlalchemy import String
+from sqlalchemy.types import TypeDecorator
 
-from app.domain.user.vo import (
-    Email,
-    PasswordHash,
-    UserId,
-)
-
-from .base import VOType
+from app.domain.user.vo import Email
 
 
-class UserIdType(VOType):
-    impl = BIGINT
-    vo_class = UserId
-    vo_raw = int
-    cache_ok = True
-
-
-class EmailType(VOType):
+class EmailType(TypeDecorator):
     impl = String(320)
-    vo_class = Email
-    vo_raw = str
     cache_ok = True
 
+    def process_bind_param(self, value: Email | str | None, dialect):
+        if value is None:
+            return None
+        if isinstance(value, Email):
+            return value.value
+        return value
 
-class PasswordHashType(VOType):
-    impl = String(1024)
-    vo_class = PasswordHash
-    vo_raw = str
-    cache_ok = True
-
-
-
+    def process_result_value(self, value: str | None, dialect) -> Email | None:
+        if value is None:
+            return None
+        return Email(value)

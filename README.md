@@ -25,7 +25,9 @@ uv run uvicorn main:app --reload
 
 ## Configuration
 
-Edit `config.yaml` for local development or `config.docker.yaml` for Docker.
+Default values live in `config.yaml`. `app/config.py` now loads overrides from environment variables and `.env` via `pydantic-settings`; nested keys use `__`, for example `POSTGRES__HOST`, `POSTGRES__PASSWORD`, and `AUTH__SECRET_KEY`.
+
+`config.docker.yaml` remains available if you explicitly point `CONFIG_PATH` at it, but Docker Compose now passes the application config through environment variables instead.
 
 ## Structure
 

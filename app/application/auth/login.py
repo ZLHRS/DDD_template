@@ -2,27 +2,20 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 
 from app.application.auth.exceptions import InvalidAuthDataError
-from app.application.common.interactor import Interactor
 from app.application.interfaces.auth import AuthService
 from app.domain.auth import RefreshSession, RefreshSessionRepository
 from app.domain.user.repository import IUserRepository
 from app.domain.user.vo import Email
 
 
-@dataclass
-class LoginInputDTO:
-    email: str
-    password: str
-
-
-@dataclass
-class LoginOutputDTO:
+@dataclass(frozen=True)
+class LoginResult:
     user_id: int
     is_admin: bool
     refresh_token: str
 
 
-class LoginInteractor(Interactor[LoginInputDTO, LoginOutputDTO]):
+class LoginInteractor:
     def __init__(
         self,
         user_repository: IUserRepository,
@@ -35,12 +28,12 @@ class LoginInteractor(Interactor[LoginInputDTO, LoginOutputDTO]):
         self.auth_service = auth_service
         self.refresh_token_expire_days = refresh_token_expire_days
 
-    async def __call__(self, data: LoginInputDTO) -> LoginOutputDTO:
-        user = await self.user_repository.get_by_email(Email(data.email))
+    async def __call__(self, *, email: str, password: str) -> LoginResult:
+        user = await self.user_repository.get_by_email(Email(email))
         if user is None:
             raise InvalidAuthDataError("Invalid credentials")
 
-        if not self.auth_service.verify_password(data.password, user.password_hash.value):
+        if not self.auth_service.verify_password(password, user.password_hash):
             raise InvalidAuthDataError("Invalid credentials")
 
         now = datetime.now(UTC)
@@ -57,8 +50,8 @@ class LoginInteractor(Interactor[LoginInputDTO, LoginOutputDTO]):
         )
         await self.refresh_session_repository.create_session(refresh_session)
 
-        return LoginOutputDTO(
-            user_id=updated_user.id.value,
+        return LoginResult(
+            user_id=updated_user.id,
             is_admin=updated_user.is_admin,
             refresh_token=refresh_token,
         )

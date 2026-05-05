@@ -1,18 +1,17 @@
 [project]
-name = "backend-template"
+name = "ddd-template"
 version = "0.1.0"
-description = "Layer-first FastAPI backend template"
+description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.18.4",
     "asyncpg>=0.31.0",
-    "dature[yaml]>=0.16.0",
-    "dishka>=1.9.1",
-    "fastapi[standard]>=0.135.3",
-    "greenlet>=3.4.0",
-    "psycopg[binary]>=3.2.0",
-    "python-jose[cryptography]>=3.5.0",
+    "dishka>=1.10.1",
+    "fastapi>=0.136.1",
+    "pydantic>=2.13.3",
+    "pydantic-settings[yaml]>=2.11.0",
+    "python-jose>=3.5.0",
     "sqlalchemy>=2.0.49",
-    "uvicorn>=0.44.0",
+    "uvicorn>=0.46.0",
 ]

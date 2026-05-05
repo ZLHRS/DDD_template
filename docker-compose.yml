@@ -30,14 +30,21 @@ services:
       dockerfile: Dockerfile
     container_name: backend-template-api
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-backend_template_db}
-      CONFIG_PATH: /app/config.docker.yaml
+      POSTGRES__HOST: postgres
+      POSTGRES__PORT: 5432
+      POSTGRES__USER: ${DB_USER:-postgres}
+      POSTGRES__PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES__DB: ${DB_NAME:-backend_template_db}
+      AUTH__SECRET_KEY: ${AUTH_SECRET_KEY:-your-super-secret-key-minimum-32-characters-long-for-production}
+      AUTH__ALGORITHM: ${AUTH_ALGORITHM:-HS256}
+      AUTH__ACCESS_TOKEN_EXPIRE_MINUTES: ${AUTH_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      AUTH__REFRESH_TOKEN_EXPIRE_DAYS: ${AUTH_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
     volumes:
       - ./app:/app/app
       - ./main.py:/app/main.py
-      - ./config.docker.yaml:/app/config.docker.yaml:ro
       - ./alembic:/app/alembic
     ports:
       - "${APP_PORT:-8000}:8000"

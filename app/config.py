@@ -1,26 +1,26 @@
-from dataclasses import dataclass
 import os
 from pathlib import Path
-from typing import Annotated
 
-from dature import Source, load
-from dature.fields.secret_str import SecretStr
-from dature.validators.number import Gt, Lt
-from dature.validators.string import MinLength
+from pydantic import BaseModel, Field, SecretStr
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    YamlConfigSettingsSource,
+)
 
 
-@dataclass
-class PostgresConfig:
+class PostgresConfig(BaseModel):
     host: str
-    port: Annotated[int, Gt(value=0), Lt(value=65536)]
+    port: int = Field(gt=0, lt=65536)
     user: str
     password: SecretStr
     db: str
     echo: bool = False
-    pool_size: int = 30
-    pool_timeout: int = 30
-    pool_recycle: int = 3600
-    max_overflow: int = 20
+    pool_size: int = Field(default=30, ge=1)
+    pool_timeout: int = Field(default=30, ge=0)
+    pool_recycle: int = Field(default=3600, ge=0)
+    max_overflow: int = Field(default=20, ge=0)
     pool_pre_ping: bool = True
     echo_pool: bool = False
 
@@ -31,28 +31,57 @@ class PostgresConfig:
         )
 
 
-@dataclass
-class AuthConfig:
-    secret_key: Annotated[SecretStr, MinLength(value=32)]
-    algorithm: Annotated[str, MinLength(value=1)]
-    access_token_expire_minutes: Annotated[int, Gt(value=0)]
-    refresh_token_expire_days: Annotated[int, Gt(value=0)]
+class AuthConfig(BaseModel):
+    secret_key: SecretStr = Field(min_length=32)
+    algorithm: str = Field(min_length=1)
+    access_token_expire_minutes: int = Field(gt=0)
+    refresh_token_expire_days: int = Field(gt=0)
 
 
-@dataclass
-class Config:
+class Config(BaseSettings):
     postgres: PostgresConfig
     auth: AuthConfig
-    environment: str = "development"
+    environment: str = Field(default="development", min_length=1)
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_nested_delimiter="__",
+        env_ignore_empty=True,
+        extra="ignore",
+        yaml_file="config.yaml",
+    )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            YamlConfigSettingsSource(settings_cls),
+            file_secret_settings,
+        )
 
 
-
-def load_config(file_name: str | None = None) -> Config:
-    if file_name is None:
-        file_name = os.environ.get("CONFIG_PATH", "config.yaml")
-
+def load_config() -> Config:
+    file_name = os.environ.get("CONFIG_PATH", "config.yaml")
     file_path = Path(file_name)
     if not file_path.is_file():
         raise FileNotFoundError(f"Config file '{file_name}' not found")
 
-    return load(Source(file_=file_path), Config)
+    if file_name == "config.yaml":
+        return Config()
+
+    class ConfigFromFile(Config):
+        model_config = SettingsConfigDict(
+            **{**Config.model_config, "yaml_file": file_name}
+        )
+
+    return ConfigFromFile()

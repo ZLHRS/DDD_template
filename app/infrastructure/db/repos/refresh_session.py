@@ -21,7 +21,7 @@ class RefreshSessionRepositoryImpl(RefreshSessionRepository, BaseSQLAlchemyRepo)
             insert(RefreshSessionModel)
             .values(
                 token_hash=session.token_hash,
-                user_id=session.user_id.value,
+                user_id=session.user_id,
                 expires_at=session.expires_at,
                 created_at=session.created_at,
                 revoked_at=session.revoked_at,
