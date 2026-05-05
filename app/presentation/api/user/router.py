@@ -3,7 +3,7 @@ from dishka.integrations.fastapi import FromDishka, inject
 
 from app.application.user.get_me import GetUserProfileInteractor, GetUserProfileOutputDTO
 from app.config import Config
-from app.security import require_auth_claims_from_request
+from app.security import require_auth_claims
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -15,7 +15,7 @@ async def get_user_profile(
     interactor: FromDishka[GetUserProfileInteractor],
     config: FromDishka[Config],
 ) -> GetUserProfileOutputDTO:
-    claims = require_auth_claims_from_request(request, config)
+    claims = require_auth_claims(request, config)
     return await interactor(user_id=claims.user_id)
 
 

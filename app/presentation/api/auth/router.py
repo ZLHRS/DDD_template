@@ -8,12 +8,12 @@ from app.application.auth.register import RegisterInteractor
 from app.application.common.transaction import TransactionManager
 from app.config import Config
 from app.security import (
+    build_auth_response,
+    build_success_response,
     clear_auth_cookies,
-    create_auth_response,
-    create_success_response,
-    get_refresh_token_from_request,
-    require_auth_claims_from_request,
-    require_refresh_token_from_request,
+    read_refresh_token,
+    require_auth_claims,
+    require_refresh_token,
 )
 
 from .schemas import LoginRequest, RegisterRequest, SuccessResponse
@@ -43,7 +43,7 @@ async def login_user_handler(
 ) -> Response:
     login_result = await interactor(email=data.email, password=data.password)
     await transaction_manager.commit()
-    return create_auth_response(
+    return build_auth_response(
         config=config,
         user_id=login_result.user_id,
         is_admin=login_result.is_admin,
@@ -58,10 +58,8 @@ async def refresh_user_handler(
     interactor: FromDishka[RefreshInteractor],
     config: FromDishka[Config],
 ) -> Response:
-    refresh_result = await interactor(
-        refresh_token=require_refresh_token_from_request(request)
-    )
-    return create_auth_response(
+    refresh_result = await interactor(refresh_token=require_refresh_token(request))
+    return build_auth_response(
         config=config,
         user_id=refresh_result.user_id,
         is_admin=refresh_result.is_admin,
@@ -76,10 +74,10 @@ async def logout_user_handler(
     transaction_manager: FromDishka[TransactionManager],
     config: FromDishka[Config],
 ) -> Response:
-    require_auth_claims_from_request(request, config)
-    await interactor(refresh_token=get_refresh_token_from_request(request))
+    require_auth_claims(request, config)
+    await interactor(refresh_token=read_refresh_token(request))
     await transaction_manager.commit()
-    return clear_auth_cookies(create_success_response())
+    return clear_auth_cookies(build_success_response())
 
 
 auth_router = router
