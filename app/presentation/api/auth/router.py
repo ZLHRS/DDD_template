@@ -5,7 +5,6 @@ from app.application.auth.login import LoginInteractor
 from app.application.auth.logout import LogoutInteractor
 from app.application.auth.refresh import RefreshInteractor
 from app.application.auth.register import RegisterInteractor
-from app.application.common.transaction import TransactionManager
 from app.config import Config
 from app.security import (
     build_auth_response,
@@ -26,10 +25,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def register_user_handler(
     data: RegisterRequest,
     interactor: FromDishka[RegisterInteractor],
-    transaction_manager: FromDishka[TransactionManager],
 ) -> SuccessResponse:
     await interactor(email=data.email, password=data.password, full_name=data.full_name)
-    await transaction_manager.commit()
     return SuccessResponse(success=True)
 
 
@@ -38,15 +35,13 @@ async def register_user_handler(
 async def login_user_handler(
     data: LoginRequest,
     interactor: FromDishka[LoginInteractor],
-    transaction_manager: FromDishka[TransactionManager],
     config: FromDishka[Config],
 ) -> Response:
     login_result = await interactor(email=data.email, password=data.password)
-    await transaction_manager.commit()
     return build_auth_response(
         config=config,
         user_id=login_result.user_id,
-        is_admin=login_result.is_admin,
+        role=login_result.role,
         refresh_token=login_result.refresh_token,
     )
 
@@ -62,7 +57,8 @@ async def refresh_user_handler(
     return build_auth_response(
         config=config,
         user_id=refresh_result.user_id,
-        is_admin=refresh_result.is_admin,
+        role=refresh_result.role,
+        refresh_token=refresh_result.refresh_token,
     )
 
 
@@ -71,12 +67,10 @@ async def refresh_user_handler(
 async def logout_user_handler(
     request: Request,
     interactor: FromDishka[LogoutInteractor],
-    transaction_manager: FromDishka[TransactionManager],
     config: FromDishka[Config],
 ) -> Response:
     require_auth_claims(request, config)
     await interactor(refresh_token=read_refresh_token(request))
-    await transaction_manager.commit()
     return clear_auth_cookies(build_success_response())
 
 

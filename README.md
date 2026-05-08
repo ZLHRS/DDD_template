@@ -23,11 +23,23 @@ uv sync
 uv run uvicorn main:app --reload
 ```
 
+Run database migrations before starting the API:
+
+```bash
+uv run alembic upgrade head
+```
+
+
 ## Configuration
 
-Default values live in `config.yaml`. `app/config.py` now loads overrides from environment variables and `.env` via `pydantic-settings`; nested keys use `__`, for example `POSTGRES__HOST`, `POSTGRES__PASSWORD`, and `AUTH__SECRET_KEY`.
+Create a `.env` file and set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `AUTH_SECRET_KEY`, `AUTH_ALGORITHM`, `AUTH_ACCESS_TOKEN_EXPIRE_MINUTES`, `AUTH_REFRESH_TOKEN_EXPIRE_DAYS`, and optionally `ENVIRONMENT`. The app still accepts the equivalent nested `POSTGRES__*` and `AUTH__*` variables when Docker Compose injects them.
 
-`config.docker.yaml` remains available if you explicitly point `CONFIG_PATH` at it, but Docker Compose now passes the application config through environment variables instead.
+## Migrations
+
+- Alembic lives only in `alembic/`
+- model metadata is loaded from `app.infrastructure.db.models`
+- create a new migration with `uv run alembic revision --autogenerate -m "describe_change"`
+
 
 ## Structure
 

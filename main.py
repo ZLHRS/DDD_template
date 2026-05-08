@@ -1,6 +1,9 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from dishka.integrations.fastapi import setup_dishka
 
 from app.application.common.exceptions import ApplicationError, ValidationError
 from app.config import load_config
@@ -18,12 +21,26 @@ from app.presentation.api.health.router import health_router
 from app.presentation.api.user.router import user_router
 
 
+def create_lifespan(container):
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            await container.close()
+
+    return lifespan
+
+
 def create_app() -> FastAPI:
     config = load_config()
-
-    app = FastAPI(title="Backend Template API")
-
     container = setup_dishka_container(config)
+
+    app = FastAPI(
+        title="Backend Template API",
+        lifespan=create_lifespan(container),
+    )
+
     setup_dishka(container, app)
 
     app.include_router(health_router)

@@ -5,13 +5,13 @@ from app.application.auth.exceptions import InvalidAuthDataError
 from app.application.interfaces.auth import AuthService
 from app.domain.auth import RefreshSession, RefreshSessionRepository
 from app.domain.user.repository import IUserRepository
-from app.domain.user.vo import Email
+from app.domain.user.vo import Email, UserRole
 
 
 @dataclass(frozen=True)
 class LoginResult:
     user_id: int
-    is_admin: bool
+    role: UserRole
     refresh_token: str
 
 
@@ -52,6 +52,6 @@ class LoginInteractor:
 
         return LoginResult(
             user_id=updated_user.id,
-            is_admin=updated_user.is_admin,
+            role=updated_user.role,
             refresh_token=refresh_token,
         )

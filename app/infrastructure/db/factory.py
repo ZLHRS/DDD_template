@@ -8,12 +8,15 @@ from sqlalchemy.ext.asyncio import (
 from app.config import PostgresConfig
 
 
-def create_pool(db_config: PostgresConfig) -> async_sessionmaker[AsyncSession]:
-    engine = create_engine(db_config)
-    return create_session_maker(engine)
+def create_engine(
+    db_config: PostgresConfig,
+    *,
+    application_name: str | None = None,
+) -> AsyncEngine:
+    connect_args = None
+    if application_name is not None:
+        connect_args = {"server_settings": {"application_name": application_name}}
 
-
-def create_engine(db_config: PostgresConfig) -> AsyncEngine:
     return create_async_engine(
         db_config.get_url(),
         echo=db_config.echo,
@@ -23,7 +26,9 @@ def create_engine(db_config: PostgresConfig) -> AsyncEngine:
         max_overflow=db_config.max_overflow,
         pool_pre_ping=db_config.pool_pre_ping,
         echo_pool=db_config.echo_pool,
+        connect_args=connect_args,
     )
+
 
 def create_session_maker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(

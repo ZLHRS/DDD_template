@@ -45,11 +45,13 @@ class AuthInteractorProvider(Provider):
         user_repository: IUserRepository,
         refresh_session_repository: RefreshSessionRepository,
         auth_service: AuthService,
+        config: Config,
     ) -> RefreshInteractor:
         return RefreshInteractor(
             user_repository=user_repository,
             refresh_session_repository=refresh_session_repository,
             auth_service=auth_service,
+            refresh_token_expire_days=config.auth.refresh_token_expire_days,
         )
 
     @provide

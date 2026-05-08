@@ -1,15 +1,13 @@
 from collections.abc import AsyncIterable
 
 from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from app.application.common.transaction import TransactionManager
+from app.config import Config
 from app.domain.auth import RefreshSessionRepository
 from app.domain.user.repository import IUserRepository
-from app.config import Config
-from app.infrastructure.db.factory import create_session_maker
-from app.infrastructure.db.holder import HolderDao
-from app.infrastructure.db.transaction import TransactionManagerImpl
+from app.infrastructure.db.factory import create_engine, create_session_maker
+from app.infrastructure.db.repos import RefreshSessionRepositoryImpl, UserRepositoryImpl
 
 
 class DBProvider(Provider):
@@ -17,16 +15,9 @@ class DBProvider(Provider):
 
     @provide(scope=Scope.APP)
     def get_engine(self, config: Config) -> AsyncEngine:
-        return create_async_engine(
-            config.postgres.get_url(),
-            echo=config.postgres.echo,
-            pool_size=config.postgres.pool_size,
-            pool_timeout=config.postgres.pool_timeout,
-            pool_recycle=config.postgres.pool_recycle,
-            max_overflow=config.postgres.max_overflow,
-            pool_pre_ping=config.postgres.pool_pre_ping,
-            echo_pool=config.postgres.echo_pool,
-            connect_args={"server_settings": {"application_name": "backend-template"}},
+        return create_engine(
+            config.postgres,
+            application_name="backend-template",
         )
 
     @provide(scope=Scope.APP)
@@ -42,32 +33,24 @@ class DBProvider(Provider):
         session_maker: async_sessionmaker[AsyncSession],
     ) -> AsyncIterable[AsyncSession]:
         async with session_maker() as session:
-            yield session
-
-    @provide(scope=Scope.REQUEST)
-    async def get_holder_dao(
-        self,
-        session: AsyncSession,
-    ) -> HolderDao:
-        return HolderDao(session)
-
-    @provide(scope=Scope.REQUEST)
-    async def get_transaction_manager(
-        self,
-        session: AsyncSession,
-    ) -> TransactionManager:
-        return TransactionManagerImpl(session)
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
+            else:
+                await session.commit()
 
     @provide(scope=Scope.REQUEST)
     async def get_user_repository(
         self,
-        holder_dao: HolderDao,
+        session: AsyncSession,
     ) -> IUserRepository:
-        return holder_dao.user_repo
+        return UserRepositoryImpl(session)
 
     @provide(scope=Scope.REQUEST)
     async def get_refresh_session_repository(
         self,
-        holder_dao: HolderDao,
+        session: AsyncSession,
     ) -> RefreshSessionRepository:
-        return holder_dao.refresh_session_repo
+        return RefreshSessionRepositoryImpl(session)

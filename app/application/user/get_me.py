@@ -9,7 +9,7 @@ class GetUserProfileOutputDTO:
     id: int
     email: str
     full_name: str
-    is_admin: bool
+    role: str
 
 
 class GetUserProfileInteractor:
@@ -25,5 +25,5 @@ class GetUserProfileInteractor:
             id=user.id,
             email=user.email.value,
             full_name=user.full_name,
-            is_admin=user.is_admin,
+            role=user.role.value,
         )

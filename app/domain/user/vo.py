@@ -3,7 +3,7 @@ import re
 
 
 class UserRole(str, Enum):
-    ANALYST = "analyst"
+    USER = "user"
     ADMIN = "admin"
 
 

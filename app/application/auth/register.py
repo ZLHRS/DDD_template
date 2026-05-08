@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-import secrets
 
 from app.application.common.exceptions import ValidationError
 from app.application.interfaces.auth import AuthService
@@ -25,12 +24,10 @@ class RegisterInteractor:
 
         now = datetime.now(UTC)
         user = User(
-            id=secrets.randbelow(2**63 - 1) + 1,
             email=normalized_email,
             password_hash=self.auth_service.hash_password(password),
             full_name=full_name,
-            role=UserRole.ANALYST,
-            is_admin=False,
+            role=UserRole.USER,
             created_at=now,
             updated_at=now,
             last_login_at=None,

@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from jose import JWTError, jwt
 
 from app.config import Config
+from app.domain.user.vo import UserRole
 
 ACCESS_COOKIE_KEY = "access_jwt"
 REFRESH_COOKIE_KEY = "refresh_token"
@@ -18,7 +19,7 @@ _SUCCESS_BODY = {"success": True}
 @dataclass(frozen=True)
 class AuthClaims:
     user_id: int
-    is_admin: bool
+    role: UserRole
 
 
 def _unauthorized(detail: str) -> HTTPException:
@@ -34,6 +35,16 @@ def _parse_user_id(subject: Any) -> int:
     if user_id <= 0:
         raise _unauthorized("Invalid token subject")
     return user_id
+
+
+def _parse_role(value: Any) -> UserRole:
+    if not isinstance(value, str):
+        raise _unauthorized("Invalid token role")
+
+    try:
+        return UserRole(value)
+    except ValueError as exc:
+        raise _unauthorized("Invalid token role") from exc
 
 
 def _read_cookie(request: Request, key: str) -> str | None:
@@ -79,21 +90,17 @@ def parse_access_token(token: str, config: Config) -> AuthClaims:
     if not subject:
         raise _unauthorized("Invalid token subject")
 
-    is_admin = payload.get("is_admin")
-    if not isinstance(is_admin, bool):
-        raise _unauthorized("Invalid token")
-
-    return AuthClaims(user_id=_parse_user_id(subject), is_admin=is_admin)
+    return AuthClaims(user_id=_parse_user_id(subject), role=_parse_role(payload.get("role")))
 
 
-def issue_access_token(user_id: int, is_admin: bool, config: Config) -> str:
+def issue_access_token(user_id: int, role: UserRole, config: Config) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(
         minutes=config.auth.access_token_expire_minutes
     )
     return jwt.encode(
         {
             "sub": str(user_id),
-            "is_admin": is_admin,
+            "role": role.value,
             "exp": expires_at,
         },
         config.auth.secret_key.get_secret_value(),
@@ -134,14 +141,14 @@ def build_auth_response(
     *,
     config: Config,
     user_id: int,
-    is_admin: bool,
+    role: UserRole,
     refresh_token: str | None = None,
 ) -> JSONResponse:
     response = build_success_response()
     response = _set_cookie(
         response,
         key=ACCESS_COOKIE_KEY,
-        value=issue_access_token(user_id=user_id, is_admin=is_admin, config=config),
+        value=issue_access_token(user_id=user_id, role=role, config=config),
         max_age=config.auth.access_token_expire_minutes * 60,
         config=config,
     )

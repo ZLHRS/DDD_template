@@ -12,7 +12,6 @@ class UserMapper:
             full_name=model.full_name,
             role=model.role,
             is_active=model.is_active,
-            is_admin=model.is_admin,
             created_at=model.created_at,
             updated_at=model.updated_at,
             last_login_at=model.last_login_at,
@@ -20,15 +19,16 @@ class UserMapper:
 
     @staticmethod
     def to_model(user: User) -> UserModel:
-        return UserModel(
-            id=user.id,
-            email=user.email,
-            password_hash=user.password_hash,
-            full_name=user.full_name,
-            role=user.role,
-            is_active=user.is_active,
-            is_admin=user.is_admin,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-            last_login_at=user.last_login_at,
-        )
+        fields = {
+            "email": user.email,
+            "password_hash": user.password_hash,
+            "full_name": user.full_name,
+            "role": user.role,
+            "is_active": user.is_active,
+            "created_at": user.created_at,
+            "updated_at": user.updated_at,
+            "last_login_at": user.last_login_at,
+        }
+        if user.id is not None:
+            fields["id"] = user.id
+        return UserModel(**fields)
